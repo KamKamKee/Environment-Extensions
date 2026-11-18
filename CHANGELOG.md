@@ -1,0 +1,35 @@
+## [1.0.0] - 20.11.2026
+### First Release
+- Created Package
+- Provided a lot of documentation
+- Cooldown: Class to use for cooldowns. Duration, value curves and isReady property included
+- Data Persistance: JSON based persistance
+    - SimplePath: use instead of any string paths
+    - DataPersistance: store and retrieve data
+    - CustomPersistance: reference a specific file to save and retrieve data from/to
+- List Expressions
+    - Join extension
+    - Printable extension
+    - Filter extension
+    - Map extension
+    - SwitchMap extension
+    - Tap extension
+    - CombinedList class *[EXPERIMENTAL]*
+- Math Extensions
+    - Number range checks
+    - Number radius checks
+    - Layermask checks
+    - Vector2 ranges
+- Properties
+    - Property: subscribable and updatable values
+    - PropertySubscription: holds data for a single value subscription
+    - Computed: values that update upon a change on one of it's dependencies *[EXPERIMENTAL]*
+    - PropertyBehaviour: MonoBehaviour extension to allow clean subscriptions that will be cleared upon element destruction and maintained upon property destruction
+- UI
+    - CanvasGroupSwitch: class to switch between active and inactive state of a canvas group
+- Vector Utility
+    - Vector multiplication
+    - Flat vector conversion
+    - Distance wrapper
+    - Magnitude manipulation
+    - Random number from Vector2 range

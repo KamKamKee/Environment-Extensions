@@ -1,0 +1,14 @@
+{
+  "name": "com.kamkamindiestries.eextensions",
+  "version": "1.0.0",
+  "displayName": "Environment Extensions",
+  "description": "A collection of features I like to use in my Projects. Requires PrimeTween for the UI features.",
+  "unity": "6000.3",
+  "dependencies": {},
+  "license": "MPL-2.0",
+  "author": {
+    "name": "KamKamKee",
+    "email": "kamkamkeedev@gmail.com",
+    "url": "https://github.com/KamKamKee"
+  }
+}

@@ -1,0 +1,22 @@
+{
+    "name": "EExtensions",
+    "rootNamespace": "EExtensions",
+    "references": [
+        "GUID:80ecb87cae9c44d19824e70ea7229748"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.kyrylokuzyk.primetween",
+            "expression": "",
+            "define": "PRIME_TWEEN_INSTALLED"
+        }
+    ],
+    "noEngineReferences": false
+}

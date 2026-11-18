@@ -1,0 +1,40 @@
+using System.Collections;
+using System.Collections.Generic;
+using EExtensions.Properties;
+using UnityEngine;
+
+public class #SCRIPTNAME# : PropertyBehaviour
+{
+	// Static properties can be initialized up here
+
+	// Use this for initialization. Non-static properties should be initialized here
+	void Awake()
+	{
+		
+	}
+	
+	// All property subscriptions should go here
+	void Start()
+	{
+		
+	}
+
+
+	// Subscriptions will be resumed here
+	protected override void OnEnable()
+    {
+        base.OnEnable();
+    }
+
+	// Subscriptions will be paused here
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+    }
+
+	// Subscriptions will be unsubscribed here
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+    }
+}
