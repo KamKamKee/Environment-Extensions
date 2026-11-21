@@ -933,7 +933,7 @@ To avoid running into this problem, you can store the subscription data and unsu
 
 ```cs
 private Property<int> integerProperty;
-private PropertySubscription<int> integerPropertyCallbackSubscription;
+private IGenericSubscription integerPropertyCallbackSubscription;
 
 private void Awake()
 {
@@ -971,7 +971,7 @@ Here is a little example for that:
 
 ```cs
 private Property<int> prop;
-private PropertySubscription<int> subscription;
+private IGenericSubscription subscription;
 
 private void Awake()
 {
@@ -1142,7 +1142,7 @@ public class NewPropertyBehaviourScript : PropertyBehaviour
 {
 	void Start()
 	{
-		IGenericPropertySubscription subscription = FindGenericSubscriptionFrom(integerProperty);
+		IGenericSubscription subscription = FindGenericSubscriptionFrom(integerProperty);
 
 		bool anyActive = AnySubscriptionsActive();
 	}

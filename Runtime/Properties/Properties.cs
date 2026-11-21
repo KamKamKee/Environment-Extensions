@@ -8,35 +8,64 @@
  */
 
 using System;
+using Codice.Client.BaseCommands.WkStatus.Printers;
 using UnityEngine;
 
 namespace EExtensions
 {
     namespace Properties
     {
-        public interface IGenericPropertySubscription
+        public enum SubscribableType
         {
+            Property,
+            Computed,
+            SubscriptionTopic
+        }
+
+        public interface IGenericSubscribable
+        {
+            public SubscribableType subscribableType { get; }
+
+            public abstract IGenericSubscription Subscribe(Action noValueCallback);
+
+            public abstract IGenericSubscription Subscribe(PropertyBehaviour target, Action noValueCallback);
+
+            public abstract void Resubscribe(IGenericSubscription subscription);
+
+            public abstract void Unsubscribe(IGenericSubscription subscription);
+
+            public abstract bool IsTypeOf<CompareType>();
+        }
+
+        public interface IGenericSubscription
+        {
+            public SubscribableType subscribableType { get; }
+
             public abstract void Unsubscribe();
 
             public abstract void Resubscribe();
 
             public abstract bool IsSubscribed();
 
-            public abstract bool IsSubscribedTo<T>(Property<T> property);
+            public abstract bool IsSubscribedTo(IGenericSubscribable property);
 
-            public abstract bool TargetPropertyIsIntact();
+            public abstract bool IsTypeOf<CompareType>();
+
+            public abstract bool TargetIsIntact();
         }
 
         /// <summary>
         /// Stores subscription data for a callback method and it's corresponding property.
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        public struct PropertySubscription<T> : IGenericPropertySubscription
+        public struct PropertySubscription<T> : IGenericSubscription
         {
+            public SubscribableType subscribableType { get => SubscribableType.Property; }
+
             /// <summary>
             /// The target property that the subscription is about.
             /// </summary>
-            public Property<T> propertyUsed { get; private set; }
+            public Property<T> targetProperty { get; private set; }
             /// <summary>
             /// The callback method taking old value and new value.
             /// </summary>
@@ -45,7 +74,7 @@ namespace EExtensions
 
             public PropertySubscription(Property<T> propertyUsed, ref Action<T, T> callbackMethod)
             {
-                this.propertyUsed = propertyUsed;
+                this.targetProperty = propertyUsed;
                 this.callbackMethod = callbackMethod;
                 this.isSubscribed = true;
             }
@@ -58,7 +87,7 @@ namespace EExtensions
                 if (!isSubscribed)
                     return;
 
-                propertyUsed.Unsubscribe(this);
+                targetProperty.Unsubscribe(this);
 
                 isSubscribed = false;
             }
@@ -71,7 +100,7 @@ namespace EExtensions
                 if (isSubscribed)
                     return;
 
-                propertyUsed.Resubscribe(this);
+                targetProperty.Resubscribe(this);
                 isSubscribed = true;
             }
 
@@ -89,19 +118,24 @@ namespace EExtensions
             /// </summary>
             /// <param name="property"></param>
             /// <returns></returns>
-            public bool IsSubscribedTo<CompareType>(Property<CompareType> property)
+            public bool IsSubscribedTo(IGenericSubscribable property)
             {
-                if (property is Property<T>)
+                if (property.subscribableType == SubscribableType.Property && property.IsTypeOf<T>())
                 {
-                    return property.Equals(this.propertyUsed);
+                    return property.Equals(this.targetProperty);
                 }
 
                 return false;
             }
 
-            public bool TargetPropertyIsIntact()
+            public bool IsTypeOf<CompareType>()
             {
-                return propertyUsed.isAlive;
+                return typeof(T) == typeof(CompareType);
+            }
+
+            public bool TargetIsIntact()
+            {
+                return targetProperty.isAlive;
             }
         }
 
@@ -109,8 +143,10 @@ namespace EExtensions
         /// Wraps an observable pattern arround a value and calls events whenever something was changed.
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        public class Property<T>
+        public class Property<T> : IGenericSubscribable
         {
+            public SubscribableType subscribableType { get => SubscribableType.Property; }
+
             private event Action<T, T> _valueChangedEventCallback;
             private T propertyValue;
             private MonoBehaviour parent;
@@ -257,7 +293,7 @@ namespace EExtensions
             /// Subscribes to the property without a value callback.
             /// </summary>
             /// <param name="noValueCallback"></param>
-            public PropertySubscription<T> Subscribe(Action noValueCallback)
+            public IGenericSubscription Subscribe(Action noValueCallback)
             {
                 Action<T, T> wrappedValueCallback = (_, _) => noValueCallback.Invoke();
 
@@ -270,7 +306,7 @@ namespace EExtensions
             /// Subscribes to the property without a value callback.
             /// </summary>
             /// <param name="noValueCallback"></param>
-            public PropertySubscription<T> Subscribe(PropertyBehaviour target, Action noValueCallback)
+            public IGenericSubscription Subscribe(PropertyBehaviour target, Action noValueCallback)
             {
                 return target.SubscribeClean(this, noValueCallback);
             }
@@ -279,7 +315,7 @@ namespace EExtensions
             /// Subscribes to the property with a value callback of the new value.
             /// </summary>
             /// <param name="onlyNewValueCallback"></param>
-            public PropertySubscription<T> Subscribe(Action<T> onlyNewValueCallback)
+            public IGenericSubscription Subscribe(Action<T> onlyNewValueCallback)
             {
                 Action<T, T> wrappedValueCallback = (_, newValue) => onlyNewValueCallback.Invoke(newValue);
 
@@ -292,7 +328,7 @@ namespace EExtensions
             /// Subscribes to the property with a value callback of the new value.
             /// </summary>
             /// <param name="onlyNewValueCallback"></param>
-            public PropertySubscription<T> Subscribe(PropertyBehaviour target, Action<T> onlyNewValueCallback)
+            public IGenericSubscription Subscribe(PropertyBehaviour target, Action<T> onlyNewValueCallback)
             {
                 return target.SubscribeClean(this, onlyNewValueCallback);
             }
@@ -301,7 +337,7 @@ namespace EExtensions
             /// Subscribes to the property with a value callback of first the old value, second the new value.
             /// </summary>
             /// <param name="fullValueCallback"></param>
-            public PropertySubscription<T> Subscribe(Action<T, T> fullValueCallback)
+            public IGenericSubscription Subscribe(Action<T, T> fullValueCallback)
             {
                 _valueChangedEventCallback += fullValueCallback;
 
@@ -312,7 +348,7 @@ namespace EExtensions
             /// Subscribes to the property with a value callback of first the old value, second the new value.
             /// </summary>
             /// <param name="fullValueCallback"></param>
-            public PropertySubscription<T> Subscribe(PropertyBehaviour target, Action<T, T> fullValueCallback)
+            public IGenericSubscription Subscribe(PropertyBehaviour target, Action<T, T> fullValueCallback)
             {
                 return target.SubscribeClean(this, fullValueCallback);
             }
@@ -322,18 +358,14 @@ namespace EExtensions
             /// Resubscribes to the property with an existing subscription already given.
             /// </summary>
             /// <param name="subscription"></param>
-            public void Resubscribe(PropertySubscription<T> subscription)
+            public void Resubscribe(IGenericSubscription subscription)
             {
-                _valueChangedEventCallback += subscription.callbackMethod;
-            }
+                if (subscription.subscribableType == SubscribableType.Property && subscription.IsTypeOf<T>())
+                {
+                    PropertySubscription<T> propSubscription = (PropertySubscription<T>)subscription;
 
-            /// <summary>
-            /// Unsubscribes from the property when a subscription with value callback was used.
-            /// </summary>
-            /// <param name="unsubscribeToCallback"></param>
-            private void Unsubscribe(Action<T, T> unsubscribeToCallback)
-            {
-                _valueChangedEventCallback -= unsubscribeToCallback;
+                    _valueChangedEventCallback += propSubscription.callbackMethod;
+                }
             }
 
             /// <summary>
@@ -341,9 +373,18 @@ namespace EExtensions
             /// Unsubscribes from the property when a subscription with value callback was used.
             /// </summary>
             /// <param name="unsubscribeTo"></param>
-            public void Unsubscribe(PropertySubscription<T> subscription)
+            public void Unsubscribe(IGenericSubscription subscription)
             {
-                Unsubscribe(subscription.callbackMethod);
+                if (subscription.subscribableType == SubscribableType.Property && subscription.IsTypeOf<T>())
+                {
+                    PropertySubscription<T> propSubscription = (PropertySubscription<T>)subscription;
+                    _valueChangedEventCallback -= propSubscription.callbackMethod;
+                }
+            }
+
+            public bool IsTypeOf<CompareType>()
+            {
+                return typeof(T) == typeof(CompareType);
             }
 
             private void ConnectParentObject(MonoBehaviour parent)

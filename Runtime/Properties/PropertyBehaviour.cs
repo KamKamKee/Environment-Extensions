@@ -18,7 +18,7 @@ namespace EExtensions
     {
         public abstract class PropertyBehaviour : MonoBehaviour
         {
-            private List<IGenericPropertySubscription> subscriptions = new();
+            private List<IGenericSubscription> subscriptions = new();
 
             /// <summary>
             /// Unsubscribes from all current subscriptions. Clears the list. New subscriptions have to be created again.
@@ -60,7 +60,7 @@ namespace EExtensions
             protected void CleanupSubscriptions()
             {
                 subscriptions.Filter(subscription => {
-                    return subscription.TargetPropertyIsIntact();
+                    return subscription.TargetIsIntact();
                 });
             }
 
@@ -70,7 +70,7 @@ namespace EExtensions
             /// <returns></returns>
             public bool AnySubscriptionsActive()
             {
-                foreach (IGenericPropertySubscription subscription in subscriptions)
+                foreach (IGenericSubscription subscription in subscriptions)
                 {
                     if (subscription.IsSubscribed())
                         return true;
@@ -86,9 +86,9 @@ namespace EExtensions
             /// <param name="property"></param>
             /// <param name="noValueCallback"></param>
             /// <returns></returns>
-            public PropertySubscription<T> SubscribeClean<T>(Property<T> property, Action noValueCallback)
+            public IGenericSubscription SubscribeClean(IGenericSubscribable property, Action noValueCallback)
             {
-                PropertySubscription<T> subscription = property.Subscribe(noValueCallback);
+                IGenericSubscription subscription = property.Subscribe(noValueCallback);
                 subscriptions.Add(subscription);
                 return subscription;
             }
@@ -100,10 +100,19 @@ namespace EExtensions
             /// <param name="property"></param>
             /// <param name="singleValueCallback"></param>
             /// <returns></returns>
-            public PropertySubscription<T> SubscribeClean<T>(Property<T> property, Action<T> singleValueCallback)
+            public IGenericSubscription SubscribeClean<T>(IGenericSubscribable property, Action<T> singleValueCallback)
             {
-                PropertySubscription<T> subscription = property.Subscribe(singleValueCallback);
-                subscriptions.Add(subscription);
+                IGenericSubscription subscription = null;
+
+                if (property.IsTypeOf<T>())
+                {
+                    if (property.subscribableType == SubscribableType.Property)
+                        subscription = ((Property<T>)property).Subscribe(singleValueCallback);
+                }
+
+                if (subscription != null)
+                    subscriptions.Add(subscription);
+
                 return subscription;
             }
 
@@ -114,9 +123,9 @@ namespace EExtensions
             /// <param name="property"></param>
             /// <param name="fullValueCallback"></param>
             /// <returns></returns>
-            public PropertySubscription<T> SubscribeClean<T>(Property<T> property, Action<T, T> fullValueCallback)
+            public IGenericSubscription SubscribeClean<T>(Property<T> property, Action<T, T> fullValueCallback)
             {
-                PropertySubscription<T> subscription = property.Subscribe(fullValueCallback);
+                IGenericSubscription subscription = property.Subscribe(fullValueCallback);
                 subscriptions.Add(subscription);
                 return subscription;
             }
@@ -128,7 +137,7 @@ namespace EExtensions
             /// <param name="property"></param>
             protected void UnsubscribeFrom<T>(Property<T> property)
             {
-                IGenericPropertySubscription subscription = FindGenericSubscriptionFrom(property);
+                IGenericSubscription subscription = FindGenericSubscriptionFrom(property);
 
                 if (subscription != null)
                 {
@@ -143,9 +152,9 @@ namespace EExtensions
             /// <typeparam name="T"></typeparam>
             /// <param name="property"></param>
             /// <returns></returns>
-            public IGenericPropertySubscription FindGenericSubscriptionFrom<T>(Property<T> property)
+            public IGenericSubscription FindGenericSubscriptionFrom<T>(Property<T> property)
             {
-                foreach (IGenericPropertySubscription subscription in subscriptions)
+                foreach (IGenericSubscription subscription in subscriptions)
                 {
                     if (subscription.IsSubscribedTo(property))
                     {
